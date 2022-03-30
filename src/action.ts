@@ -23,9 +23,10 @@ async function action(context: Context = github.context) {
       );
     }
 
-    const ref: string = context.payload.pull_request.head.ref;
-    const config = await getConfig(octokit, configPath, context.repo, ref, defaultConfig);
-    const labelsToAdd = getLabelsToAdd(config, ref);
+    const head_ref: string = context.payload.pull_request.head.ref;
+    const base_ref: string = context.payload.pull_request.base.ref;
+    const config = await getConfig(octokit, configPath, context.repo, head_ref, defaultConfig);
+    const labelsToAdd = getLabelsToAdd(config, head_ref, base_ref);
 
     if (labelsToAdd.length > 0) {
       await octokit.issues.addLabels({
@@ -44,12 +45,14 @@ async function action(context: Context = github.context) {
   }
 }
 
-function getLabelsToAdd(config: Config, branchName: string): string[] {
+function getLabelsToAdd(config: Config, headBranchName: string, baseBranchName: string): string[] {
   const labelsToAdd: string[] = [];
 
   for (const label in config) {
-    const patterns = arrayify(config[label]);
-    const matches = matcher([branchName], patterns);
+    const isObject = config[label] !== null && typeof config[label] === 'object' && !Array.isArray(config[label])
+    const isBase = isObject && 'base' in <object>config[label]
+    const patterns = arrayify(isObject ? Object.values(config[label])[0] : config[label]);
+    const matches = matcher([isBase ? baseBranchName : headBranchName], patterns);
 
     if (matches.length > 0) {
       labelsToAdd.push(label);

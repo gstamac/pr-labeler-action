@@ -3,3 +3,7 @@ fix: fix/*
 chore: chore/*
 release: ['release/*', 'hotfix/*', '!release/skip-*']
 skip-release: release/skip-*
+head_feature:
+  head: ['head-feature/*', 'head-feat/*']
+base_feature:
+  base: 'base-feature/*'
